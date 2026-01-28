@@ -5,12 +5,12 @@ import tempfile
 import shutil
 from pathlib import Path
 
-# Add parent directory to path so we can import CrawlSS
+# Add parent directory to path so we can import from src
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-# Import your functions
-from CrawlSS import clear_terminal, print_banner, pick_payload, validate_url, load_domains_from_file, PAYLOADS_DIR
+# Import functions from src module
+from src.CrawlSS import clear_terminal, print_banner, pick_payload, validate_url, load_domains_from_file, PAYLOADS_DIR
 
 class TestCrawlSS:
     @pytest.fixture

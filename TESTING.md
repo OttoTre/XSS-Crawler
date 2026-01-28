@@ -29,15 +29,16 @@ python -m pytest --cov=CrawlSS --cov-report=html tests/py/
 
 ```
 XssCrawler/
-├── CrawlSS.py              # Main application
-├── tests/                  # Test directory
-│   ├── py/                 # Pytest tests
-│   │   ├── __init__.py
-│   │   └── test_CrawlSS.py
-│   └── __init__.py
+├── basic_test_website/     # Simple website for manual testing
+├── tests/                  # Test dir
+│   └── py/                 # Pytest dir
+├── src/                    # Source dir
+│   ├── payloads/           # Payloads dir
+│   ├── targets/            # Targets dir example
+│   └── CrawlSS.py          # Main application
 ├── run_tests.py            # Test runner script
-├── pytest.ini             # pytest configuration
-└── TESTING.md             # This file
+├── pytest.ini              # pytest configuration
+└── TESTING.md              # This file
 ```
 
 ## Test Structure

@@ -91,7 +91,6 @@ def select_mode():
             print(colored("Invalid input. Enter 0 for all files or a number to select one.", 'red'))
 
 
-
 def validate_url(url):
     url = url.strip()
     if not url.startswith(("http://", "https://")):
@@ -117,8 +116,6 @@ if __name__ == "__main__":
         if payloads is None or len(payloads) == 0:
             print(colored("No payloads selected. Exiting.", 'red'))
             exit(1)
-        else :
-            print(colored(f"Total payloads loaded: {len(payloads)}", 'green'))
 
         mode = select_mode()
 
