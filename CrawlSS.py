@@ -74,13 +74,25 @@ def pick_payload():
 
         except ValueError:
             print(colored("Invalid input. Enter 0 for all files or a number to select one.", 'red'))
-        except KeyboardInterrupt:
-            print(colored("\n[!] Exiting...", 'yellow'))
-            return None
+
+
+def select_mode():
+    print(colored("\nMode:", 'cyan'))
+    print(colored(f"  [1] Single Domain", 'white'))
+    print(colored(f"  [2] Multiple Domains (from file)", 'white'))
+
+    while True:
+        try:
+            choice = input(colored("\nChoose mode > ", 'blue')).strip()
+            if not choice.isdigit():
+                raise ValueError
+            return choice
+        except ValueError:
+            print(colored("Invalid input. Enter 0 for all files or a number to select one.", 'red'))
+
 
 
 def validate_url(url):
-    """Validate and normalize URL"""
     url = url.strip()
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
@@ -88,7 +100,6 @@ def validate_url(url):
 
 
 def load_domains_from_file(path):
-    """Load domains from file, return list or None if error"""
     try:
         with open(path) as f:
             domains = [line.strip() for line in f if line.strip() and not line.startswith('#')]
@@ -98,38 +109,41 @@ def load_domains_from_file(path):
 
 
 if __name__ == "__main__":
-    clear_terminal()
-    print_banner()
+    try:
+        clear_terminal()
+        print_banner()
 
-    print(colored("1. Single Domain", 'white'))
-    print(colored("2. Multiple Domains (from file)", 'white'))
-    mode = input(colored("\nChoose mode > ", 'blue')).strip()
+        payloads = pick_payload()
+        if payloads is None or len(payloads) == 0:
+            print(colored("No payloads selected. Exiting.", 'red'))
+            exit(1)
+        else :
+            print(colored(f"Total payloads loaded: {len(payloads)}", 'green'))
 
-    payloads = pick_payload()
-    if payloads is None or len(payloads) == 0:
-        print(colored("No payloads selected. Exiting.", 'red'))
-        exit(1)
-    else :
-        print(colored(f"Total payloads loaded: {len(payloads)}", 'green'))
+        mode = select_mode()
 
-    if mode == "1":
-        url = input(colored("\nTarget URL > ", 'blue')).strip()
-        url = validate_url(url)
-        print(colored(f"[*] Testing URL: {url}", 'yellow'))
-        # crawl(url, payloads)
+        if mode == "1":
+            url = input(colored("\nTarget URL > ", 'blue')).strip()
+            url = validate_url(url)
+            print(colored(f"[*] Testing URL: {url}", 'yellow'))
+            # crawl(url, payloads)
 
-    elif mode == "2":
-        path = input(colored("\nPath to domains.txt > ", 'blue')).strip()
-        domains = load_domains_from_file(path)
-        if domains is None:
-            print(colored("File not found!", 'red'))
-        else:
-            print(colored(f"[+] Loaded {len(domains)} domains", 'green'))
-            for domain in domains:
-                domain = validate_url(domain)
-                print(colored(f"[*] Testing domain: {domain}", 'yellow'))
+        elif mode == "2":
+            path = input(colored("\nPath to domains.txt > ", 'blue')).strip()
+            domains = load_domains_from_file(path)
+            if domains is None:
+                print(colored("File not found!", 'red'))
+            else:
+                print(colored(f"[+] Loaded {len(domains)} domains", 'green'))
+                for domain in domains:
+                    domain = validate_url(domain)
+                    print(colored(f"[*] Testing domain: {domain}", 'yellow'))
                 # crawl(domain, payloads)
                 time.sleep(0.1)
-    else:
-        print(colored("Invalid option.", 'red'))
+        else:
+            print(colored("Invalid mode selected. Exiting.", 'red'))
+            exit(1)
 
+    except KeyboardInterrupt:
+        print(colored("\n[!] Program interrupted by user. Exiting...", 'yellow'))
+        exit(0)
