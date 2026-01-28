@@ -9,17 +9,20 @@ pip install -r requirements.txt
 
 ### Run Tests
 ```bash
-# Run all tests with coverage
-python run_tests.py
-
-# Or run directly with pytest (auto-discovers tests/py/)
+# Run all tests
 python -m pytest -v
 
-# Or run unittest version
-python tests/ut/test_CrawlSS.py
+# Or use the test runner
+python run_tests.py
+```
 
-# Or run pytest version directly
-python -m pytest tests/py/test_CrawlSS.py -v
+### Run Tests with Coverage (optional)
+```bash
+# Install coverage tools first
+pip install pytest-cov
+
+# Then run with coverage
+python -m pytest --cov=CrawlSS --cov-report=html tests/py/
 ```
 
 ## Project Structure
@@ -31,9 +34,6 @@ XssCrawler/
 │   ├── py/                 # Pytest tests
 │   │   ├── __init__.py
 │   │   └── test_CrawlSS.py
-│   ├── ut/                 # Unittest tests
-│   │   ├── __init__.py
-│   │   └── test_CrawlSS.py
 │   └── __init__.py
 ├── run_tests.py            # Test runner script
 ├── pytest.ini             # pytest configuration
@@ -42,15 +42,12 @@ XssCrawler/
 
 ## Test Structure
 
-### tests/py/test_CrawlSS.py (Recommended)
+### tests/py/test_CrawlSS.py
 - Modern pytest syntax
 - Parametrized tests
 - Better error messages
 - Coverage reporting
-
-### tests/ut/test_CrawlSS.py (Fallback)
-- Standard unittest
-- More verbose setup
+- 15 comprehensive tests
 - Compatible with older Python versions
 
 ## What Gets Tested
@@ -81,7 +78,7 @@ After running tests, open `htmlcov/index.html` in your browser to see:
 
 ### For pytest:
 ```python
-def test_your_function(self, temp_dir):
+def test_your_function(temp_dir):
     # Arrange
     setup_data()
 
@@ -92,27 +89,16 @@ def test_your_function(self, temp_dir):
     assert result == expected
 ```
 
-### For unittest:
-```python
-def test_your_function(self):
-    # Arrange
-    setup_data()
-
-    # Act
-    result = your_function()
-
-    # Assert
-    self.assertEqual(result, expected)
-```
-
 ## Test Scenarios Covered
 
-- ✅ Normal operation
-- ✅ Edge cases (empty directories, no files)
-- ✅ Error conditions (permission denied)
+- ✅ Terminal clearing (Windows, Linux, macOS)
+- ✅ Banner display with colored output
+- ✅ Payload file selection and loading
+- ✅ URL validation and normalization
+- ✅ Domain file loading
+- ✅ Edge cases (empty files, missing files, whitespace)
+- ✅ Error handling and user input validation
 - ✅ Cross-platform compatibility
-- ✅ File system operations
-- ✅ User interface output
 
 ## CI/CD Integration
 

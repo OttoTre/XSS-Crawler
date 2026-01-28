@@ -79,6 +79,24 @@ def pick_payload():
             return None
 
 
+def validate_url(url):
+    """Validate and normalize URL"""
+    url = url.strip()
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
+    return url
+
+
+def load_domains_from_file(path):
+    """Load domains from file, return list or None if error"""
+    try:
+        with open(path) as f:
+            domains = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+        return domains
+    except FileNotFoundError:
+        return None
+
+
 if __name__ == "__main__":
     clear_terminal()
     print_banner()
@@ -96,23 +114,22 @@ if __name__ == "__main__":
 
     if mode == "1":
         url = input(colored("\nTarget URL > ", 'blue')).strip()
-        if not url.startswith(("http://", "https://")):
-            url = "https://" + url
+        url = validate_url(url)
+        print(colored(f"[*] Testing URL: {url}", 'yellow'))
         # crawl(url, payloads)
 
     elif mode == "2":
         path = input(colored("\nPath to domains.txt > ", 'blue')).strip()
-        try:
-            with open(path) as f:
-                domains = [line.strip() for line in f if line.strip() and not line.startswith('#')]
-            for domain in domains:
-                if not domain.startswith(("http://", "https://")):
-                    domain = "https://" + domain
-                print(colored(f"\n[+] Crawling domain: {domain}", 'green'))
-                # crawl(domain, payloads)
-                time.sleep(1)
-        except FileNotFoundError:
+        domains = load_domains_from_file(path)
+        if domains is None:
             print(colored("File not found!", 'red'))
+        else:
+            print(colored(f"[+] Loaded {len(domains)} domains", 'green'))
+            for domain in domains:
+                domain = validate_url(domain)
+                print(colored(f"[*] Testing domain: {domain}", 'yellow'))
+                # crawl(domain, payloads)
+                time.sleep(0.1)
     else:
         print(colored("Invalid option.", 'red'))
 
