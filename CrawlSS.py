@@ -1,5 +1,6 @@
 import os
 import platform
+import time
 
 from termcolor import colored
 from pathlib import Path
@@ -8,8 +9,10 @@ TOOL_NAME = "crawlss"
 TOOL_VERSION = "1.0"
 PAYLOADS_DIR = "payloads"
 
+
 def clear_terminal():
     os.system('cls' if platform.system() == 'Windows' else 'clear')
+
 
 def print_banner():
     banner = """
@@ -22,6 +25,7 @@ def print_banner():
     """
     print(colored(banner, 'blue', attrs=['bold']))
     print(colored("by OttoTre".center(90), 'white'))
+
 
 def pick_payload():
     if not os.path.exists(PAYLOADS_DIR):
@@ -78,4 +82,37 @@ def pick_payload():
 if __name__ == "__main__":
     clear_terminal()
     print_banner()
-    pick_payload()
+
+    print(colored("1. Single Domain", 'white'))
+    print(colored("2. Multiple Domains (from file)", 'white'))
+    mode = input(colored("\nChoose mode > ", 'blue')).strip()
+
+    payloads = pick_payload()
+    if payloads is None or len(payloads) == 0:
+        print(colored("No payloads selected. Exiting.", 'red'))
+        exit(1)
+    else :
+        print(colored(f"Total payloads loaded: {len(payloads)}", 'green'))
+
+    if mode == "1":
+        url = input(colored("\nTarget URL > ", 'blue')).strip()
+        if not url.startswith(("http://", "https://")):
+            url = "https://" + url
+        # crawl(url, payloads)
+
+    elif mode == "2":
+        path = input(colored("\nPath to domains.txt > ", 'blue')).strip()
+        try:
+            with open(path) as f:
+                domains = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+            for domain in domains:
+                if not domain.startswith(("http://", "https://")):
+                    domain = "https://" + domain
+                print(colored(f"\n[+] Crawling domain: {domain}", 'green'))
+                # crawl(domain, payloads)
+                time.sleep(1)
+        except FileNotFoundError:
+            print(colored("File not found!", 'red'))
+    else:
+        print(colored("Invalid option.", 'red'))
+
