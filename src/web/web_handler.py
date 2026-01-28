@@ -4,11 +4,16 @@ from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 from termcolor import colored
 
+from .web_utils import test_form_vulnerability as tf
+from .web_utils import test_url_parameters as tu
+from .web_utils import test_loose_inputs as tl
+
 def crawl(domain, payloads):
     start_time = time.time()
     vuln_count = 0
     print(colored(f"\nStarting scan on: {domain}", 'cyan', attrs=['bold']))
 
+    return
     # Playwright setup replaces the messy 'Options' block
     with sync_playwright() as p:
         # Launching Chromium - cleaner and lighter than standard Chrome

@@ -1,3 +1,5 @@
 termcolor
 pytest
 pytest-cov
+beautifulsoup4
+playwright

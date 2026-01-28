@@ -5,6 +5,8 @@ import time
 from termcolor import colored
 from pathlib import Path
 
+from .web.web_handler import crawl
+
 TOOL_NAME = "crawlss"
 TOOL_VERSION = "1.0"
 PAYLOADS_DIR = "payloads"
@@ -123,7 +125,7 @@ if __name__ == "__main__":
             url = input(colored("\nTarget URL > ", 'blue')).strip()
             url = validate_url(url)
             print(colored(f"[*] Testing URL: {url}", 'yellow'))
-            # crawl(url, payloads)
+            crawl(url, payloads)
 
         elif mode == "2":
             path = input(colored("\nPath to domains.txt > ", 'blue')).strip()
@@ -135,7 +137,7 @@ if __name__ == "__main__":
                 for domain in domains:
                     domain = validate_url(domain)
                     print(colored(f"[*] Testing domain: {domain}", 'yellow'))
-                # crawl(domain, payloads)
+                crawl(domain, payloads)
                 time.sleep(0.1)
         else:
             print(colored("Invalid mode selected. Exiting.", 'red'))
