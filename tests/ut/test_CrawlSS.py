@@ -82,14 +82,12 @@ class TestCrawlSS(unittest.TestCase):
         (self.payloads_dir / 'not_txt.py').write_text('not a payload')
 
         with patch('builtins.print') as mock_print:
-            result = pick_payload()
-            self.assertIsNone(result)  # Current implementation doesn't return anything
-
-            # Check that files were listed (should only list .txt files)
-            calls = mock_print.call_args_list
-            # Should have printed file names
-            printed_files = [call[0][0] for call in calls if 'test' in str(call)]
-            self.assertEqual(len(printed_files), 2)  # Only .txt files
+            with patch('builtins.input', return_value='1'):
+                result = pick_payload()
+                # Should return list of payloads from selected file
+                self.assertIsNotNone(result)
+                self.assertIsInstance(result, list)
+                self.assertIn('payload1', result)  # Should contain payload from file
 
     def test_payloads_dir_constant(self):
         """Test that PAYLOADS_DIR constant is correct"""

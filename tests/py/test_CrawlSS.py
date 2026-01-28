@@ -71,13 +71,11 @@ class TestCrawlSS:
         (payloads_path / 'not_payload.py').write_text('print("not a payload")')
 
         with patch('builtins.print') as mock_print:
-            result = pick_payload()
-            assert result is None
-
-            # Check that only .txt files were processed
-            calls = mock_print.call_args_list
-            txt_file_calls = [call for call in calls if '.txt' in str(call)]
-            assert len(txt_file_calls) == 2
+            with patch('builtins.input', return_value='1'):
+                result = pick_payload()
+                assert result is not None
+                assert isinstance(result, list)
+                assert '<script>alert(1)</script>' in result
 
     @pytest.mark.parametrize("os_type,cmd", [
         ("Windows", "cls"),
