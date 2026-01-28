@@ -124,7 +124,7 @@
 <body>
     <div class="container">
         <h1>Text Display</h1>
-        
+
         <div class="input-group">
             <input 
                 type="text" 
@@ -148,7 +148,7 @@
 
         function addText() {
             const text = textInput.value.trim();
-            
+
             if (text === '') {
                 alert('Please enter some text!');
                 return;
@@ -164,7 +164,7 @@
             const outputItem = document.createElement('div');
             outputItem.className = 'output-item';
             outputItem.innerHTML = text;
-            
+
             // Add to top of output
             outputContainer.insertBefore(outputItem, outputContainer.firstChild);
 
