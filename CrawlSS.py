@@ -37,33 +37,29 @@ def pick_payload():
         print(colored("No payload files found in the payloads directory.", 'red'))
         return None
 
-    for idx, file in enumerate(payload_files, start=1):
-        print(f"{idx}. {file.name}")
+    print(colored("\nAvailable payload lists:", 'cyan'))
+    for i, file in enumerate(payload_files, 1):
+        print(colored(f"  [{i}] {os.path.basename(file)}", 'white'))
 
-    # """Allow user to pick a payload from the payloads directory"""
-    # try:
-    #     payload_files = [f for f in os.listdir(PAYLOADS_DIR) if os.path.isfile(os.path.join(PAYLOADS_DIR, f))]
-    #     if not payload_files:
-    #         print(colored("No payload files found in the payloads directory.", 'red'))
-    #         return None
+    while True:
+        try:
+            choice = input(colored("\nSelect payload file > ", 'blue')).strip()
+            if not choice.isdigit():
+                raise ValueError
 
-    #     print(colored("Available Payloads:", 'green', attrs=['bold']))
-    #     for idx, file in enumerate(payload_files, start=1):
-    #         print(f"{idx}. {file}")
+            choice = int(choice)
+            if 1 <= choice <= len(payload_files):
+                selected = payload_files[choice - 1]
 
-    #     choice = int(input(colored("Select a payload by number: ", 'yellow')))
-    #     if 1 <= choice <= len(payload_files):
-    #         selected_file = payload_files[choice - 1]
-    #         with open(os.path.join(PAYLOADS_DIR, selected_file), 'r') as f:
-    #             payloads = f.read().splitlines()
-    #         return payloads
-    #     else:
-    #         print(colored("Invalid selection.", 'red'))
-    #         return None
-    # except Exception as e:
-    #     print(colored(f"Error selecting payload: {e}", 'red'))
-    #     return None
-
+            with open(selected, 'r', encoding='utf-8') as f:
+                payloads = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+            print(colored(f"[+] Loaded {len(payloads)} payloads → {os.path.basename(selected)}", 'green'))
+            return payloads
+        except ValueError:
+            print(colored("Invalid input. Enter a number to select file or 0 to select all.", 'red'))
+        except KeyboardInterrupt:
+            print(colored("\n[!] Exiting...", 'yellow'))
+            return None
 
 
 if __name__ == "__main__":
