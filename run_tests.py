@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test Runner for CrawlSS Project
+Test Runner for crawlss Project
 Run all tests and generate coverage reports
 """
 
@@ -9,13 +9,13 @@ import sys
 
 def run_tests():
     """Run all tests with coverage"""
-    print("🧪 Running CrawlSS Tests...")
+    print("🧪 Running crawlss Tests...")
     print("=" * 50)
 
     # Run pytest without coverage first (since pytest-cov might not be available)
     cmd = [
         "python", "-m", "pytest",
-        "tests/py/test_CrawlSS.py",  # pytest version
+        "tests/py/test_crawlss.py",  # pytest version
         "-v"                      # verbose output
     ]
 
@@ -46,7 +46,7 @@ def run_tests():
 def run_unittest():
     """Fallback to unittest if pytest fails"""
     print("📋 Running with unittest...")
-    cmd = ["python", "tests/ut/test_CrawlSS.py"]
+    cmd = ["python", "tests/ut/test_crawlss.py"]
 
     result = subprocess.run(cmd)
     return result.returncode

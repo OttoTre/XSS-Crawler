@@ -1,4 +1,4 @@
-# Testing Guide for CrawlSS
+# Testing Guide for crawlss
 
 ## Quick Start
 
@@ -22,7 +22,7 @@ python run_tests.py
 pip install pytest-cov
 
 # Then run with coverage
-python -m pytest --cov=CrawlSS --cov-report=html tests/py/
+python -m pytest --cov=crawlss --cov-report=html tests/py/
 ```
 
 ## Project Structure
@@ -30,12 +30,16 @@ python -m pytest --cov=CrawlSS --cov-report=html tests/py/
 ```
 XssCrawler/
 ├── basic_test_website/     # Simple website for manual testing
+├── payloads/               # Payloads dir
+├── targets/                # Targets dir example
 ├── tests/                  # Test dir
 │   └── py/                 # Pytest dir
 ├── src/                    # Source dir
-│   ├── payloads/           # Payloads dir
-│   ├── targets/            # Targets dir example
-│   └── CrawlSS.py          # Main application
+│   ├── web/                # Website handler dir
+|   |   └── web_handler.py  # Website handler
+|   |   └── web_utils.py    # Website utils
+│   └── crawlss.py          # Main logic
+├── main.py                 # Run script
 ├── run_tests.py            # Test runner script
 ├── pytest.ini              # pytest configuration
 └── TESTING.md              # This file
@@ -43,7 +47,7 @@ XssCrawler/
 
 ## Test Structure
 
-### tests/py/test_CrawlSS.py
+### tests/py/test_crawlss.py
 - Modern pytest syntax
 - Parametrized tests
 - Better error messages

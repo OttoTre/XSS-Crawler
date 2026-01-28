@@ -1,1 +1,1 @@
-# Tests for CrawlSS project
+# Tests for crawlss project

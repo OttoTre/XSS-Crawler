@@ -109,8 +109,7 @@ def load_domains_from_file(path):
         return None
 
 
-if __name__ == "__main__":
-    try:
+def run():
         clear_terminal()
         print_banner()
 
@@ -142,7 +141,3 @@ if __name__ == "__main__":
         else:
             print(colored("Invalid mode selected. Exiting.", 'red'))
             exit(1)
-
-    except KeyboardInterrupt:
-        print(colored("\n[!] Program interrupted by user. Exiting...", 'yellow'))
-        exit(0)

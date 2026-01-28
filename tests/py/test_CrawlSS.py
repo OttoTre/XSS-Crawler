@@ -10,9 +10,9 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # Import functions from src module
-from src.CrawlSS import clear_terminal, print_banner, pick_payload, validate_url, load_domains_from_file, PAYLOADS_DIR
+from src.crawlss import clear_terminal, print_banner, pick_payload, validate_url, load_domains_from_file, PAYLOADS_DIR
 
-class TestCrawlSS:
+class Testcrawlss:
     @pytest.fixture
     def temp_dir(self):
         test_dir = tempfile.mkdtemp()

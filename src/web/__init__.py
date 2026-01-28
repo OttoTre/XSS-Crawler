@@ -1,1 +1,1 @@
-"""Web handling module for CrawlSS"""
+"""Web handling module for crawlss"""

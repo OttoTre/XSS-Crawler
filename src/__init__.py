@@ -1,3 +1,3 @@
-"""CrawlSS - XSS Crawler Tool"""
+"""crawlss - XSS Crawler Tool"""
 
 __version__ = "1.0"
