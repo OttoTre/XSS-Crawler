@@ -4,16 +4,14 @@ import platform
 from termcolor import colored
 from pathlib import Path
 
-TOOL_NAME = "dzXSS"
+TOOL_NAME = "crawlss"
 TOOL_VERSION = "1.0"
 PAYLOADS_DIR = "payloads"
 
 def clear_terminal():
-    """Clear terminal based on operating system"""
     os.system('cls' if platform.system() == 'Windows' else 'clear')
 
 def print_banner():
-    """Print application banner"""
     banner = """
  ██████╗██████╗  █████╗ ██╗    ██╗██╗     ███████╗███████╗
 ██╔════╝██╔══██╗██╔══██╗██║    ██║██║     ██╔════╝██╔════╝
@@ -38,6 +36,7 @@ def pick_payload():
         return None
 
     print(colored("\nAvailable payload lists:", 'cyan'))
+    print(colored(f"  [0] All files", 'blue'))
     for i, file in enumerate(payload_files, 1):
         print(colored(f"  [{i}] {os.path.basename(file)}", 'white'))
 
@@ -48,15 +47,29 @@ def pick_payload():
                 raise ValueError
 
             choice = int(choice)
-            if 1 <= choice <= len(payload_files):
-                selected = payload_files[choice - 1]
 
-            with open(selected, 'r', encoding='utf-8') as f:
-                payloads = [line.strip() for line in f if line.strip() and not line.startswith('#')]
-            print(colored(f"[+] Loaded {len(payloads)} payloads → {os.path.basename(selected)}", 'green'))
-            return payloads
+            # Select all files
+            if choice == 0:
+                all_payloads = []
+                for file in payload_files:
+                    with open(file, 'r', encoding='utf-8') as f:
+                        payloads = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+                        all_payloads.extend(payloads)
+                print(colored(f"[+] Loaded {len(all_payloads)} payloads from {len(payload_files)} files", 'green'))
+                return all_payloads
+
+            # Select specific file
+            elif 1 <= choice <= len(payload_files):
+                selected = payload_files[choice - 1]
+                with open(selected, 'r', encoding='utf-8') as f:
+                    payloads = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+                print(colored(f"[+] Loaded {len(payloads)} payloads → {os.path.basename(selected)}", 'green'))
+                return payloads
+            else:
+                raise ValueError
+
         except ValueError:
-            print(colored("Invalid input. Enter a number to select file or 0 to select all.", 'red'))
+            print(colored("Invalid input. Enter 0 for all files or a number to select one.", 'red'))
         except KeyboardInterrupt:
             print(colored("\n[!] Exiting...", 'yellow'))
             return None
