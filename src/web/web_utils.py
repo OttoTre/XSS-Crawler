@@ -2,6 +2,7 @@
 
 # from playwright.sync_api import TimeoutError as PlaywrightTimeout
 from urllib.parse import urlparse, parse_qs, urlencode
+from termcolor import colored
 
 def evade(p):
     # Just return the basics to keep the scanner fast
@@ -36,9 +37,20 @@ def test_form_vulnerability(page, form, payloads):
     # Define the XSS listener
     def handle_dialog(dialog):
         nonlocal vuln_count
-        print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
-        vuln_count += 1
-        dialog.accept()
+        try:
+            # 1. Log the hit
+            print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
+            vuln_count += 1
+
+            # 2. Only attempt to accept if Playwright hasn't closed it yet
+            # We wrap this to catch the "already handled" error
+            dialog.accept()
+        except Exception as e:
+            # If it's already handled, just ignore the error and move on
+            if "already handled" in str(e):
+                pass
+            else:
+                print(f"Debug: Dialog error: {e}")
 
     page.on("dialog", handle_dialog)
 
@@ -100,9 +112,20 @@ def test_url_parameters(page, url, payloads):
     # Define the listener for XSS alerts
     def handle_dialog(dialog):
         nonlocal vuln_count
-        print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
-        vuln_count += 1
-        dialog.accept()
+        try:
+            # 1. Log the hit
+            print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
+            vuln_count += 1
+
+            # 2. Only attempt to accept if Playwright hasn't closed it yet
+            # We wrap this to catch the "already handled" error
+            dialog.accept()
+        except Exception as e:
+            # If it's already handled, just ignore the error and move on
+            if "already handled" in str(e):
+                pass
+            else:
+                print(f"Debug: Dialog error: {e}")
 
     # Attach the listener to the page
     page.on("dialog", handle_dialog)
@@ -170,9 +193,20 @@ def test_loose_inputs(page, url, payloads):
                     # This is how Playwright handles XSS reactions
                     def handle_dialog(dialog):
                         nonlocal vuln_count
-                        print(colored(f"VULNERABLE --> {page.url} (with payload: {ev})", 'green'))
-                        vuln_count += 1
-                        dialog.accept()
+                        try:
+                            # 1. Log the hit
+                            print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
+                            vuln_count += 1
+
+                            # 2. Only attempt to accept if Playwright hasn't closed it yet
+                            # We wrap this to catch the "already handled" error
+                            dialog.accept()
+                        except Exception as e:
+                            # If it's already handled, just ignore the error and move on
+                            if "already handled" in str(e):
+                                pass
+                            else:
+                                print(f"Debug: Dialog error: {e}")
 
                     page.once("dialog", handle_dialog)
 

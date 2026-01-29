@@ -13,7 +13,7 @@ def crawl(domain, payloads):
     vuln_count = 0
     print(colored(f"\nStarting scan on: {domain}", 'cyan', attrs=['bold']))
 
-    return
+    # return
     # Playwright setup replaces the messy 'Options' block
     with sync_playwright() as p:
         # Launching Chromium - cleaner and lighter than standard Chrome
