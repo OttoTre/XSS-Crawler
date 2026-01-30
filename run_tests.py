@@ -43,20 +43,8 @@ def run_tests():
         print("❌ pytest not found. Install with: pip install pytest")
         return 1
 
-def run_unittest():
-    """Fallback to unittest if pytest fails"""
-    print("📋 Running with unittest...")
-    cmd = ["python", "tests/ut/test_crawlss.py"]
-
-    result = subprocess.run(cmd)
-    return result.returncode
-
 if __name__ == "__main__":
     # Try pytest first, fallback to unittest
     exit_code = run_tests()
-
-    if exit_code != 0:
-        print("\n🔄 Trying unittest...")
-        exit_code = run_unittest()
 
     sys.exit(exit_code)
