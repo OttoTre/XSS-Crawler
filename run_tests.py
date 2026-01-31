@@ -16,7 +16,7 @@ def run_tests():
     cmd = [
         "python", "-m", "pytest",
         "tests/py/test_crawlss.py",  # pytest version
-        "-v"                      # verbose output
+        "-v"                         # verbose output
     ]
 
     try:
@@ -44,7 +44,6 @@ def run_tests():
         return 1
 
 if __name__ == "__main__":
-    # Try pytest first, fallback to unittest
     exit_code = run_tests()
 
     sys.exit(exit_code)

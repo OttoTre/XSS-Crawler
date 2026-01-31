@@ -1,8 +1,6 @@
-#  Playwright version below
-
-# from playwright.sync_api import TimeoutError as PlaywrightTimeout
 from urllib.parse import urlparse, parse_qs, urlencode
 from termcolor import colored
+
 
 def evade(p):
     # Just return the basics to keep the scanner fast
@@ -12,23 +10,6 @@ def evade(p):
         f"';{p}//",             # Break out of a JavaScript string
     ]
 
-def send_payload(page, locator, text):
-    try:
-        # Playwright auto-scrolls and waits for 'actionability' (visible/enabled)
-        # .fill() is atomic and triggers input/change events automatically
-        locator.fill(text, timeout=2000)
-        return True
-    except:
-        try:
-            # Fallback: The JavaScript injection method (same as your second try block)
-            # Useful for hidden inputs or strictly restricted fields
-            locator.evaluate(
-                "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
-                text
-            )
-            return True
-        except:
-            return False
 
 def test_form_vulnerability(page, form, payloads):
     vuln_count = 0

@@ -8,13 +8,12 @@ from .web_utils import test_form_vulnerability as tf
 from .web_utils import test_url_parameters as tu
 from .web_utils import test_loose_inputs as tl
 
+
 def crawl(domain, payloads):
     start_time = time.time()
     vuln_count = 0
     print(colored(f"\nStarting scan on: {domain}", 'cyan', attrs=['bold']))
 
-    # return
-    # Playwright setup replaces the messy 'Options' block
     with sync_playwright() as p:
         # Launching Chromium - cleaner and lighter than standard Chrome
         browser = p.chromium.launch(headless=True)
@@ -74,7 +73,9 @@ def crawl(domain, payloads):
                         queue.append(link)
 
             except Exception as e:
-                print(colored(f"[!] Crawl error at {url}: {str(e)[:100]}", 'red'))
+                print(colored(f"Page unreachable.", 'red', attrs=['bold']))
+                # print(colored(f"[!] Crawl error at {url}: {str(e)[:100]}", 'red')) # Uncomment for in depth debugging
+                return [domain, -1, 0]
 
         # De-duplicate forms based on URL
         forms = list({f['url']: f for f in forms}.values())
@@ -106,3 +107,5 @@ def crawl(domain, payloads):
         print(colored("No XSS vulnerability found. keep trying :)".center(60), 'red', attrs=['bold']))
     print(colored(f"Scan completed in {time_taken:.2f} seconds. Issues found: {vuln_count}", 'cyan'))
     print("="*60)
+
+    return [domain, vuln_count, time_taken]

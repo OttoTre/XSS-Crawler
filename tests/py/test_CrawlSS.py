@@ -1,16 +1,12 @@
-import pytest
+from pathlib import Path
 from unittest.mock import patch
 import os
-import tempfile
+import pytest
 import shutil
-from pathlib import Path
+import tempfile
 
-# Add parent directory to path so we can import from src
-import sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
-# Import functions from src module
 from src.crawlss import clear_terminal, print_banner, pick_payload, validate_url, load_domains_from_file, PAYLOADS_DIR
+
 
 class Testcrawlss:
     @pytest.fixture
@@ -38,14 +34,12 @@ class Testcrawlss:
                 clear_terminal()
                 mock_system.assert_called_once_with('clear')
 
-    def test_print_banner(self):
-        # Just test that it doesn't crash
+    def test_print_banner_do_not_crash(self):
         print_banner()
 
     def test_pick_payload_creates_directory(self, temp_dir):
         payloads_path = Path(temp_dir) / PAYLOADS_DIR
 
-        # Ensure directory doesn't exist
         if payloads_path.exists():
             shutil.rmtree(payloads_path)
 

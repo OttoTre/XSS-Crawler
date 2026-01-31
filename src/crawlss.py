@@ -7,8 +7,6 @@ from pathlib import Path
 
 from .web.web_handler import crawl
 
-TOOL_NAME = "crawlss"
-TOOL_VERSION = "1.0"
 PAYLOADS_DIR = "payloads"
 
 
@@ -108,6 +106,18 @@ def load_domains_from_file(path):
     except FileNotFoundError:
         return None
 
+def print_summary(result):
+    print("\n" + "="*60)
+    for (domain, vuln_count, time_taken) in result:
+        if vuln_count > 0:
+            print(colored(f"SUMMARY: {domain} is vulnerable to XSS! Fix it!", 'green', attrs=['bold']))
+        elif vuln_count == -1:
+            print(colored(f"SUMMARY: Scan failed for {domain}", 'red', attrs=['bold']))
+        else:
+            print(colored(f"SUMMARY: No XSS vulnerability found for {domain}", 'red', attrs=['bold']))
+        print(colored(f"Scan completed in {time_taken:.2f} seconds. Issues found: {vuln_count}", 'cyan'))
+    print("="*60)
+
 
 def run():
         clear_terminal()
@@ -129,6 +139,7 @@ def run():
         elif mode == "2":
             path = input(colored("\nPath to domains.txt > ", 'blue')).strip()
             domains = load_domains_from_file(path)
+            result = []
             if domains is None:
                 print(colored("File not found!", 'red'))
             else:
@@ -136,8 +147,11 @@ def run():
                 for domain in domains:
                     domain = validate_url(domain)
                     print(colored(f"[*] Testing domain: {domain}", 'yellow'))
-                crawl(domain, payloads)
-                time.sleep(0.1)
+                    result.append(crawl(domain, payloads))
+                    time.sleep(0.1)
+
+            print_summary(result)
+
         else:
             print(colored("Invalid mode selected. Exiting.", 'red'))
             exit(1)

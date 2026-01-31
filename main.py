@@ -5,6 +5,7 @@ from termcolor import colored
 
 from src.crawlss import run
 
+
 if __name__ == "__main__":
     try:
         run()
