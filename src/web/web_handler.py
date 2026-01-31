@@ -43,8 +43,6 @@ def crawl(domain, payloads):
             try:
                 # Playwright's goto waits for the network to be idle (more stable than sleep)
                 page.goto(url, wait_until="domcontentloaded", timeout=10000)
-
-                # Replaces your manual sleep(0.2) with a more reliable check
                 page.wait_for_load_state("networkidle")
 
                 # Get the content for BeautifulSoup
@@ -54,7 +52,6 @@ def crawl(domain, payloads):
                     action = urljoin(url, form.get('action') or url)
                     method = form.get('method', 'get').lower()
                     inputs = []
-                    # More specific selector for input fields
                     for inp in form.find_all(['input', 'textarea', 'select']):
                         name = inp.get('name') or inp.get('id')
                         if name:
@@ -81,8 +78,6 @@ def crawl(domain, payloads):
         forms = list({f['url']: f for f in forms}.values())
         param_urls = list(set(param_urls))
 
-        # IMPORTANT: You will need to rewrite your tf, tu, and tl functions
-        # to accept 'page' instead of 'driver'
         if forms:
             print(colored(f"[+] Found {len(forms)} forms", 'green'))
             for form in forms:

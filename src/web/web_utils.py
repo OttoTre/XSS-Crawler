@@ -19,15 +19,11 @@ def test_form_vulnerability(page, form, payloads):
     def handle_dialog(dialog):
         nonlocal vuln_count
         try:
-            # 1. Log the hit
             print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
             vuln_count += 1
 
-            # 2. Only attempt to accept if Playwright hasn't closed it yet
-            # We wrap this to catch the "already handled" error
             dialog.accept()
         except Exception as e:
-            # If it's already handled, just ignore the error and move on
             if "already handled" in str(e):
                 pass
             else:
@@ -73,10 +69,9 @@ def test_form_vulnerability(page, form, payloads):
                 print(colored(f"TESTED (Stored) --> {form['url']} (Payload: {ev})", 'blue'))
 
             except Exception as e:
-                # print(f"Debug error: {e}") # Uncomment if debugging
+                # print(f"Debug error: {e}") # Uncomment for debugging
                 continue
 
-    # Cleanup listener
     page.remove_listener("dialog", handle_dialog)
     return vuln_count
 
@@ -94,21 +89,16 @@ def test_url_parameters(page, url, payloads):
     def handle_dialog(dialog):
         nonlocal vuln_count
         try:
-            # 1. Log the hit
             print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
             vuln_count += 1
 
-            # 2. Only attempt to accept if Playwright hasn't closed it yet
-            # We wrap this to catch the "already handled" error
             dialog.accept()
         except Exception as e:
-            # If it's already handled, just ignore the error and move on
             if "already handled" in str(e):
                 pass
             else:
                 print(f"Debug: Dialog error: {e}")
 
-    # Attach the listener to the page
     page.on("dialog", handle_dialog)
 
     for param in params:
@@ -120,7 +110,6 @@ def test_url_parameters(page, url, payloads):
                 test_url = parsed._replace(query=new_query).geturl()
 
                 try:
-                    # Navigate to the test URL
                     # 'domcontentloaded' is faster than waiting for images/css
                     page.goto(test_url, wait_until="domcontentloaded", timeout=5000)
 
@@ -136,7 +125,6 @@ def test_url_parameters(page, url, payloads):
                     # Handling timeouts or navigation errors
                     continue
 
-    # Remove the listener so it doesn't interfere with other tests
     page.remove_listener("dialog", handle_dialog)
 
     return vuln_count
@@ -145,7 +133,6 @@ def test_url_parameters(page, url, payloads):
 def test_loose_inputs(page, url, payloads):
     vuln_count = 0
 
-    # Navigate and wait for the page to be ready
     page.goto(url, wait_until="networkidle")
 
     # Select all potential loose inputs
@@ -170,20 +157,15 @@ def test_loose_inputs(page, url, payloads):
         for payload in payloads:
             for ev in evade(payload):
                 try:
-                    # Setup an alert listener BEFORE we trigger the payload
-                    # This is how Playwright handles XSS reactions
+                    # Define the listener for XSS alerts
                     def handle_dialog(dialog):
                         nonlocal vuln_count
                         try:
-                            # 1. Log the hit
                             print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
                             vuln_count += 1
 
-                            # 2. Only attempt to accept if Playwright hasn't closed it yet
-                            # We wrap this to catch the "already handled" error
                             dialog.accept()
                         except Exception as e:
-                            # If it's already handled, just ignore the error and move on
                             if "already handled" in str(e):
                                 pass
                             else:
@@ -191,14 +173,8 @@ def test_loose_inputs(page, url, payloads):
 
                     page.once("dialog", handle_dialog)
 
-                    # 1. Fill the input (Replaces sendk)
                     inp.fill(ev)
-
-                    # 2. Try to submit (Enter or Click relative button)
                     inp.press("Enter")
-
-                    # Short wait for any JS to fire or redirection to happen
-                    # Much more stable than time.sleep(0.2)
                     page.wait_for_timeout(200)
 
                     # 3. Check if we are still on the page or if it reacted
@@ -210,7 +186,6 @@ def test_loose_inputs(page, url, payloads):
                     page.goto(url, wait_until="domcontentloaded")
 
                 except Exception as e:
-                    # If the input disappears or page crashes, move to next
                     continue
 
     return vuln_count
