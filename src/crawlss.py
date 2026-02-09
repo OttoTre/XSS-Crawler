@@ -77,7 +77,7 @@ def pick_payload():
 
 
 def select_mode():
-    print(colored("\nMode:", 'cyan'))
+    print(colored("\nMode:", 'cyan', attrs=['bold']))
     print(colored(f"  [1] Single Domain", 'white'))
     print(colored(f"  [2] Multiple Domains (from file)", 'white'))
 
@@ -89,6 +89,29 @@ def select_mode():
             return choice
         except ValueError:
             print(colored("Invalid input. Enter 0 for all files or a number to select one.", 'red'))
+
+
+def select_discover():
+    print(colored("\nEnable discovering subdomains?", 'cyan', attrs=['bold']))
+
+    while True:
+        yn = input(colored("Discover subdomains? [y/n] > ", 'blue')).strip().lower()
+        if yn in ('y', 'yes'):
+            # Ask for depth; default to 10 (sane default) if blank
+            while True:
+                try:
+                    depth = input(colored("Depth limit (0 for no limit) > ", 'blue')).strip()
+                    if depth == '':
+                        depth = '10'
+                    depth_val = int(depth)
+                    return True, depth_val
+                except ValueError:
+                    print(colored("Please enter a number for depth (0 for no limit).", 'red'))
+        elif yn in ('n', 'no', ''):
+            # When user declines discovery, only test the selected page
+            return False, 1
+        else:
+            print(colored("Invalid input. Enter 'y' or 'n'.", 'red'))
 
 
 def validate_url(url):
@@ -129,12 +152,14 @@ def run():
             exit(1)
 
         mode = select_mode()
+        follow_subdomains, max_pages = select_discover()
 
         if mode == "1":
             url = input(colored("\nTarget URL > ", 'blue')).strip()
             url = validate_url(url)
             print(colored(f"[*] Testing URL: {url}", 'yellow'))
-            crawl(url, payloads)
+
+            crawl(url, payloads, follow_subdomains=follow_subdomains, max_pages=max_pages)
 
         elif mode == "2":
             path = input(colored("\nPath to domains.txt > ", 'blue')).strip()
@@ -144,10 +169,11 @@ def run():
                 print(colored("File not found!", 'red'))
             else:
                 print(colored(f"[+] Loaded {len(domains)} domains", 'green'))
+
                 for domain in domains:
                     domain = validate_url(domain)
                     print(colored(f"[*] Testing domain: {domain}", 'yellow'))
-                    result.append(crawl(domain, payloads))
+                    result.append(crawl(domain, payloads, follow_subdomains=follow_subdomains, max_pages=max_pages))
                     time.sleep(0.1)
 
             print_summary(result)

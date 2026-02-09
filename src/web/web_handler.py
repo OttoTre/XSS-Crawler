@@ -9,9 +9,10 @@ from .web_utils import test_form_vulnerability as tf
 from .web_utils import test_url_parameters as tu
 from .web_utils import test_loose_inputs as tl
 from .web_utils import test_fragment_parameters as tfrag
+from .web_menu import select_urls as menu_select
 
 
-def crawl(domain, payloads):
+def crawl(domain, payloads, follow_subdomains=False, max_pages=10):
     start_time = time.time()
     vuln_count = 0
     print(colored(f"\nStarting scan on: {domain}", 'cyan', attrs=['bold']))
@@ -31,7 +32,6 @@ def crawl(domain, payloads):
         param_urls = []
         visited = set()
         queue = [domain]
-        max_pages = 10
         pages_crawled = 0
         domain_netloc = urlparse(domain).netloc
         # Exclude common unwanted paths
@@ -39,7 +39,13 @@ def crawl(domain, payloads):
         # Where to save discovered URLs
         DISCOVERED_FILE = os.path.join('targets', 'discovered_urls.txt')
 
-        while queue and pages_crawled < max_pages:
+        # Support unlimited crawling when max_pages == 0
+        if max_pages == 0:
+            condition = lambda q, c: bool(q)
+        else:
+            condition = lambda q, c: bool(q) and c < max_pages
+
+        while condition(queue, pages_crawled):
             url = queue.pop(0)
             if url in visited:
                 continue
@@ -77,8 +83,14 @@ def crawl(domain, payloads):
                     if any(pat in link for pat in EXCLUDE_PATTERNS):
                         continue
                     # Only follow http(s) links on the same netloc and not yet visited
-                    if parsed_link.scheme in ('http', 'https') and parsed_link.netloc == domain_netloc and link not in visited:
-                        queue.append(link)
+                    if parsed_link.scheme in ('http', 'https') and link not in visited:
+                        # If following subdomains is allowed, accept links whose netloc endswith domain_netloc
+                        if follow_subdomains:
+                            if parsed_link.netloc.endswith(domain_netloc):
+                                queue.append(link)
+                        else:
+                            if parsed_link.netloc == domain_netloc:
+                                queue.append(link)
 
             except Exception as e:
                 print(colored(f"Page unreachable.", 'red', attrs=['bold']))
@@ -118,10 +130,14 @@ def crawl(domain, payloads):
         except Exception:
             pass
 
-        extra_targets = [u for u in visited if u != domain]
-        if extra_targets:
-            print(colored(f"[+] Running targeted tests on {len(extra_targets)} discovered paths", 'cyan'))
-            for t_url in extra_targets:
+        visited_list = sorted(visited)
+        chosen = menu_select(visited_list)
+
+        if not chosen:
+            print(colored('[!] No URLs chosen for targeted testing.', 'yellow'))
+        else:
+            print(colored(f"[+] Running targeted tests on {len(chosen)} chosen paths", 'cyan'))
+            for t_url in chosen:
                 try:
                     vuln_count += tl(page, t_url, payloads)
                     vuln_count += tu(page, t_url, payloads)
