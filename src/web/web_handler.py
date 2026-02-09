@@ -1,4 +1,5 @@
 import time
+import os
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
@@ -7,6 +8,7 @@ from termcolor import colored
 from .web_utils import test_form_vulnerability as tf
 from .web_utils import test_url_parameters as tu
 from .web_utils import test_loose_inputs as tl
+from .web_utils import test_fragment_parameters as tfrag
 
 
 def crawl(domain, payloads):
@@ -31,6 +33,11 @@ def crawl(domain, payloads):
         queue = [domain]
         max_pages = 10
         pages_crawled = 0
+        domain_netloc = urlparse(domain).netloc
+        # Exclude common unwanted paths
+        EXCLUDE_PATTERNS = ['/.git', '/.env', '/node_modules']
+        # Where to save discovered URLs
+        DISCOVERED_FILE = os.path.join('targets', 'discovered_urls.txt')
 
         while queue and pages_crawled < max_pages:
             url = queue.pop(0)
@@ -66,7 +73,11 @@ def crawl(domain, payloads):
                 for a in soup.find_all('a', href=True):
                     link = urljoin(url, a['href'])
                     parsed_link = urlparse(link)
-                    if parsed_link.netloc == urlparse(domain).netloc and link not in visited and '?' in link:
+                    # Skip excluded patterns
+                    if any(pat in link for pat in EXCLUDE_PATTERNS):
+                        continue
+                    # Only follow http(s) links on the same netloc and not yet visited
+                    if parsed_link.scheme in ('http', 'https') and parsed_link.netloc == domain_netloc and link not in visited:
                         queue.append(link)
 
             except Exception as e:
@@ -87,10 +98,36 @@ def crawl(domain, payloads):
             print(colored(f"[+] Found {len(param_urls)} param URLs", 'green'))
             for p_url in param_urls:
                 vuln_count += tu(page, p_url, payloads)
+                vuln_count += tfrag(page, p_url, payloads)
 
         if not forms and not param_urls:
             print(colored("[!] No forms/params found. Testing loose inputs...", 'yellow'))
             vuln_count += tl(page, domain, payloads)
+        else:
+            try:
+                vuln_count += tfrag(page, domain, payloads)
+            except Exception:
+                pass
+
+        try:
+            os.makedirs(os.path.dirname(DISCOVERED_FILE), exist_ok=True)
+            with open(DISCOVERED_FILE, 'w', encoding='utf-8') as f:
+                for u in sorted(visited):
+                    f.write(u + '\n')
+            print(colored(f"[+] Discovered URLs saved to {DISCOVERED_FILE}", 'cyan'))
+        except Exception:
+            pass
+
+        extra_targets = [u for u in visited if u != domain]
+        if extra_targets:
+            print(colored(f"[+] Running targeted tests on {len(extra_targets)} discovered paths", 'cyan'))
+            for t_url in extra_targets:
+                try:
+                    vuln_count += tl(page, t_url, payloads)
+                    vuln_count += tu(page, t_url, payloads)
+                    vuln_count += tfrag(page, t_url, payloads)
+                except Exception:
+                    continue
 
         browser.close()
 

