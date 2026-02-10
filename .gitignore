@@ -27,3 +27,5 @@ htmlcov/
 .coverage
 
 # Project specific
+targets/discovered_urls.txt
+targets/to_fix.txt

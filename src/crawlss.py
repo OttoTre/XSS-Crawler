@@ -39,7 +39,7 @@ def pick_payload():
         print(colored("No payload files found in the payloads directory.", 'red'))
         return None
 
-    print(colored("\nAvailable payload lists:", 'cyan'))
+    print(colored("\nAvailable payload lists:", 'cyan', attrs=['bold']))
     print(colored(f"  [0] All files", 'blue'))
     for i, file in enumerate(payload_files, 1):
         print(colored(f"  [{i}] {os.path.basename(file)}", 'white'))
@@ -149,8 +149,8 @@ def run():
             print(colored("No payloads selected. Exiting.", 'red'))
             exit(1)
 
-        mode = select_mode()
         check_subpages, max_pages = select_discover()
+        mode = select_mode()
 
         if mode == "1":
             url = input(colored("\nTarget URL > ", 'blue')).strip()
@@ -160,7 +160,7 @@ def run():
             crawl(url, payloads, check_subpages, max_pages)
 
         elif mode == "2":
-            path = input(colored("\nPath to domains.txt > ", 'blue')).strip()
+            path = input(colored("\nPath to targets file > ", 'blue')).strip()
             domains = load_domains_from_file(path)
             result = []
             if domains is None:
