@@ -29,3 +29,4 @@ htmlcov/
 # Project specific
 targets/discovered_urls.txt
 targets/to_fix.txt
+targets/fixed.txt
