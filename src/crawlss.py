@@ -97,18 +97,16 @@ def select_discover():
     while True:
         yn = input(colored("Discover subdomains? [y/n] > ", 'blue')).strip().lower()
         if yn in ('y', 'yes'):
-            # Ask for depth; default to 10 (sane default) if blank
             while True:
                 try:
-                    depth = input(colored("Depth limit (0 for no limit) > ", 'blue')).strip()
-                    if depth == '':
-                        depth = '10'
-                    depth_val = int(depth)
-                    return True, depth_val
+                    pages = input(colored("Page limit (0 for no limit) > ", 'blue')).strip()
+                    if pages == '':
+                        pages = '10'
+                    pages_val = int(pages)
+                    return True, pages_val
                 except ValueError:
-                    print(colored("Please enter a number for depth (0 for no limit).", 'red'))
+                    print(colored("Please enter a number for page limit (0 for no limit).", 'red'))
         elif yn in ('n', 'no', ''):
-            # When user declines discovery, only test the selected page
             return False, 1
         else:
             print(colored("Invalid input. Enter 'y' or 'n'.", 'red'))
@@ -152,14 +150,14 @@ def run():
             exit(1)
 
         mode = select_mode()
-        follow_subdomains, max_pages = select_discover()
+        check_subpages, max_pages = select_discover()
 
         if mode == "1":
             url = input(colored("\nTarget URL > ", 'blue')).strip()
             url = validate_url(url)
             print(colored(f"[*] Testing URL: {url}", 'yellow'))
 
-            crawl(url, payloads, follow_subdomains=follow_subdomains, max_pages=max_pages)
+            crawl(url, payloads, check_subpages, max_pages)
 
         elif mode == "2":
             path = input(colored("\nPath to domains.txt > ", 'blue')).strip()
@@ -173,7 +171,7 @@ def run():
                 for domain in domains:
                     domain = validate_url(domain)
                     print(colored(f"[*] Testing domain: {domain}", 'yellow'))
-                    result.append(crawl(domain, payloads, follow_subdomains=follow_subdomains, max_pages=max_pages))
+                    result.append(crawl(domain, payloads, check_subpages, max_pages))
                     time.sleep(0.1)
 
             print_summary(result)

