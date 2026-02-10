@@ -40,14 +40,27 @@ def _content_variants(ev):
 
 def test_form_vulnerability(page, form, payloads):
     vuln_count = 0
+    reported = set()
+    current = {"ev": None}
     page.goto(form['url'], wait_until="networkidle")
+
+    def mark_vuln(url, ev):
+        key = (url, ev)
+        if key in reported:
+            return False
+        reported.add(key)
+        return True
 
     # Define the XSS listener
     def handle_dialog(dialog):
         nonlocal vuln_count
+        ev = current["ev"]
+        if ev is None:
+            return
         try:
-            print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
-            vuln_count += 1
+            if mark_vuln(page.url, ev):
+                print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
+                vuln_count += 1
 
             dialog.accept()
         except Exception as e:
@@ -61,6 +74,7 @@ def test_form_vulnerability(page, form, payloads):
     for payload in payloads:
         for ev in evade(payload):
             try:
+                current["ev"] = ev
                 filled = False
                 for name, _ in form['inputs']:
                     field = page.locator(f"input[name='{name}'], textarea[name='{name}'], select[name='{name}']").first
@@ -77,7 +91,6 @@ def test_form_vulnerability(page, form, payloads):
                 submit_btn = page.locator("input[type=submit], button[type=submit], button").first
 
                 try:
-                    # 'timeout' here prevents the script from hanging forever if no button exists
                     submit_btn.click(timeout=2000)
                 except:
                     # Fallback to JavaScript submit if button click fails
@@ -93,8 +106,9 @@ def test_form_vulnerability(page, form, payloads):
                     content = page.content()
                     for v in _content_variants(ev):
                         if v in content:
-                            print(colored(f"VULNERABLE (reflected in HTML) --> {page.url}", 'green', attrs=['bold']))
-                            vuln_count += 1
+                            if mark_vuln(page.url, ev):
+                                print(colored(f"VULNERABLE (reflected in HTML) --> {page.url}", 'green', attrs=['bold']))
+                                vuln_count += 1
                             break
                 except Exception:
                     pass
@@ -108,6 +122,8 @@ def test_form_vulnerability(page, form, payloads):
 
 def test_url_parameters(page, url, payloads):
     vuln_count = 0
+    reported = set()
+    current = {"ev": None}
     parsed = urlparse(url)
 
     if not parsed.query:
@@ -118,9 +134,15 @@ def test_url_parameters(page, url, payloads):
     # Define the listener for XSS alerts
     def handle_dialog(dialog):
         nonlocal vuln_count
+        ev = current["ev"]
+        if ev is None:
+            return
         try:
-            print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
-            vuln_count += 1
+            key = (page.url, ev)
+            if key not in reported:
+                reported.add(key)
+                print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
+                vuln_count += 1
 
             dialog.accept()
         except Exception as e:
@@ -139,6 +161,7 @@ def test_url_parameters(page, url, payloads):
                 test_url = parsed._replace(query=new_query).geturl()
 
                 try:
+                    current["ev"] = ev
                     # 'domcontentloaded' is faster than waiting for images/css
                     page.goto(test_url, wait_until="domcontentloaded", timeout=5000)
 
@@ -151,8 +174,11 @@ def test_url_parameters(page, url, payloads):
                         content = page.content()
                         for v in _content_variants(ev):
                             if v in content:
-                                print(colored(f"VULNERABLE (reflected in HTML) --> {test_url}", 'green', attrs=['bold']))
-                                vuln_count += 1
+                                key = (test_url, ev)
+                                if key not in reported:
+                                    reported.add(key)
+                                    print(colored(f"VULNERABLE (reflected in HTML) --> {test_url}", 'green', attrs=['bold']))
+                                    vuln_count += 1
                                 break
                     except Exception:
                         pass
@@ -168,15 +194,23 @@ def test_url_parameters(page, url, payloads):
 def test_fragment_parameters(page, url, payloads):
     """Test payloads appended to the URL fragment/hash (#) to catch DOM/hash-based sinks."""
     vuln_count = 0
+    reported = set()
+    current = {"ev": None}
     parsed = urlparse(url)
     base = parsed._replace(fragment="").geturl()
 
     # Define dialog listener
     def handle_dialog(dialog):
         nonlocal vuln_count
+        ev = current["ev"]
+        if ev is None:
+            return
         try:
-            print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
-            vuln_count += 1
+            key = (page.url, ev)
+            if key not in reported:
+                reported.add(key)
+                print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
+                vuln_count += 1
             dialog.accept()
         except Exception as e:
             if "already handled" in str(e):
@@ -189,6 +223,7 @@ def test_fragment_parameters(page, url, payloads):
             try:
                 frag = quote(ev)
                 test_url = base + "#" + frag
+                current["ev"] = ev
                 page.goto(test_url, wait_until="domcontentloaded", timeout=5000)
                 page.wait_for_timeout(300)
                 print(colored(f"TESTED (fragment) --> {test_url}", 'blue'))
@@ -197,8 +232,11 @@ def test_fragment_parameters(page, url, payloads):
                     content = page.content()
                     for v in _content_variants(ev):
                         if v in content:
-                            print(colored(f"VULNERABLE (reflected in HTML) --> {test_url}", 'green', attrs=['bold']))
-                            vuln_count += 1
+                            key = (test_url, ev)
+                            if key not in reported:
+                                reported.add(key)
+                                print(colored(f"VULNERABLE (reflected in HTML) --> {test_url}", 'green', attrs=['bold']))
+                                vuln_count += 1
                             break
                 except Exception:
                     pass
@@ -212,6 +250,8 @@ def test_fragment_parameters(page, url, payloads):
 
 def test_loose_inputs(page, url, payloads):
     vuln_count = 0
+    reported = set()
+    current = {"ev": None}
 
     page.goto(url, wait_until="networkidle")
 
@@ -235,12 +275,19 @@ def test_loose_inputs(page, url, payloads):
         for payload in payloads:
             for ev in evade(payload):
                 try:
+                    current["ev"] = ev
                     # Define the listener for XSS alerts
                     def handle_dialog(dialog):
                         nonlocal vuln_count
+                        ev_local = current["ev"]
+                        if ev_local is None:
+                            return
                         try:
-                            print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
-                            vuln_count += 1
+                            key = (page.url, ev_local)
+                            if key not in reported:
+                                reported.add(key)
+                                print(colored(f"VULNERABLE --> {page.url}", 'green', attrs=['bold']))
+                                vuln_count += 1
 
                             dialog.accept()
                         except Exception as e:
@@ -265,8 +312,11 @@ def test_loose_inputs(page, url, payloads):
                         content = page.content()
                         for v in _content_variants(ev):
                             if v in content:
-                                print(colored(f"VULNERABLE (reflected in HTML) --> {page.url}", 'green', attrs=['bold']))
-                                vuln_count += 1
+                                key = (page.url, ev)
+                                if key not in reported:
+                                    reported.add(key)
+                                    print(colored(f"VULNERABLE (reflected in HTML) --> {page.url}", 'green', attrs=['bold']))
+                                    vuln_count += 1
                                 break
                     except Exception:
                         pass

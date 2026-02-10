@@ -12,11 +12,11 @@ def run_tests():
     print("🧪 Running crawlss Tests...")
     print("=" * 50)
 
-    # Run pytest without coverage first (since pytest-cov might not be available)
     cmd = [
         "python", "-m", "pytest",
-        "tests/py/test_crawlss.py",  # pytest version
-        "-v"                         # verbose output
+        "tests/py/test_crawlss.py",
+        "tests/py/test_web_utils.py",
+        "-v"
     ]
 
     try:
