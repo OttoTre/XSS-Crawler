@@ -123,13 +123,4 @@ def crawl(domain, payloads, check_subpages, max_pages):
 
         browser.close()
 
-    time_taken = time.time() - start_time
-    print("\n" + "="*60)
-    if vuln_count > 0:
-        print(colored("TARGET IS VULNERABLE TO XSS! Fix it!".center(60), 'green', attrs=['bold']))
-    else:
-        print(colored("No XSS vulnerability found. keep trying :)".center(60), 'red', attrs=['bold']))
-    print(colored(f"Scan completed in {time_taken:.2f} seconds. Issues found: {vuln_count}", 'cyan'))
-    print("="*60)
-
-    return [domain, vuln_count, time_taken]
+    return [domain, vuln_count, time.time() - start_time]
